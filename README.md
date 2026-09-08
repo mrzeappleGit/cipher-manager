@@ -1,10 +1,14 @@
 # cipherManager
 
+![cipherManager — Your agent history. Your working memory. Windows, open source, MIT.](.github/assets/readme-hero.png)
+
 A Windows desktop workspace for local agent history, search, notes and interactive agent sessions. Built with Tauri 2, React and Rust. Licensed under [MIT](LICENSE).
 
 The first downloadable release targets **Windows x64**. Android, Even G2 and Stream Deck companion source is included for experimentation; those companions are not part of the supported Windows installer.
 
 ## Features
+
+![Explore history: browse sessions and search. Keep knowledge: collect notes and context. Run agents: start interactive sessions.](.github/assets/readme-features.png)
 
 - Browse Claude, Codex and Antigravity project/session history with usage analytics and search.
 - Read documents and vault notes; optionally ask an AI provider to answer with sources.
