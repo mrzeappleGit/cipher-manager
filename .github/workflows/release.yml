@@ -35,6 +35,11 @@ jobs:
         run: npm audit
       - name: Verify source and tests
         run: npm run check
+      - name: Verify optional Proton support
+        run: cargo check --locked --manifest-path src-tauri/Cargo.toml --features proton --bins
+      - name: Verify glasses companion
+        working-directory: even-g2
+        run: npm ci && npm audit && npm test && npm run build
       - name: Prepare clean public source and scan secrets
         shell: pwsh
         run: |

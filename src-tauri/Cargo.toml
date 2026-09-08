@@ -54,25 +54,13 @@ portable-pty = "0.9.0"
 # mailparse handles MIME + transfer-encoding + RFC2047 headers so bodies arrive
 # as text.
 #
-# rustls, NOT native-tls: native-tls drags in schannel -> a second windows-sys
-# major, and generating its import libraries trips this machine's AV mid-link
-# (`error creating import library for <random>.dll ... locked`), which breaks
-# the release build outright. ureq already uses rustls, so this adds no new
-# native code at all.
-#
 # 3.x is still tagged alpha upstream but is the line with ClientBuilder +
 # STARTTLS (Bridge's default connection mode); 2.x only does implicit TLS.
 #
-# OFF BY DEFAULT — see the `proton` feature below. Both TLS backends reach
-# schannel on Windows (native-tls directly, rustls via rustls-native-certs),
-# and imap enables rustls-connector's default features so that can't be turned
-# off from here. Adding schannel changes windows-sys's feature union, forcing a
-# rebuild of a crate that emits hundreds of import libraries — and on this
-# machine that rebuild loses a race every time:
-#   error creating import library for <varies>.dll ... locked (os error 33)
-# Seven attempts, a different DLL each run. Exclude the target dir from
-# real-time AV scanning, then build with `--features proton`.
-imap = { version = "3.0.0-alpha.15", default-features = false, features = ["rustls-tls"], optional = true }
+# Use the native TLS backend (Schannel on Windows). imap's rustls backend
+# pins an older connector with vulnerable rustls-webpki; native TLS retains
+# both TLS and STARTTLS without that dependency. Proton remains opt-in.
+imap = { version = "3.0.0-alpha.15", default-features = false, features = ["native-tls"], optional = true }
 mailparse = { version = "0.16", optional = true }
 
 [features]
