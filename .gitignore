@@ -1,0 +1,47 @@
+# dependencies
+node_modules
+
+# build output
+dist
+dist-ssr
+dist-snapshot
+snapshot-data.json
+snapshot.html
+/src-tauri/target
+/src-tauri/gen/schemas
+
+# logs
+*.log
+npm-debug.log*
+
+# editor / os
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# scratch / temp
+scratch_*
+
+# Private release audit tools, reports and staging (never publish)
+/.release-private/
+
+# Credentials and local machine configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.p12
+*.key
+*.keystore
+*.jks
+**/local.properties
+**/settings.local.json
+/src-tauri/binaries/
+/release-artifacts/
+
+# Personal agent instructions and imported reference transcripts
+/.agents/
+/.claude/settings.local.json
+/*DownSub*.txt

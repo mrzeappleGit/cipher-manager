@@ -1,0 +1,214 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* ---- CipherCore neon palette ---- */
+  --color-bg: #0a0a0f;
+  --color-surface-1: #0f0f16;
+  --color-surface-2: #14141c;
+  --color-surface-3: #1a1a24;
+  --color-surface-4: #20202c;
+
+  --color-cyan: #00f5ff; /* primary identity */
+  --color-violet: #c000ff; /* AI / secondary */
+  --color-magenta: #ff0055; /* pop accent */
+
+  --color-text: #ececf4;
+  --color-muted: #b8b8c8;
+  --color-faint: #6b6b7b;
+  --color-outline: #2a2a38;
+  --color-outline-2: #33333f;
+  --color-error: #ff5470;
+  --color-good: #00f5ff;
+  --color-warn: #fbbf24;
+
+  /* ---- Legacy aliases (existing utilities inherit the neon theme) ---- */
+  --color-ink: #0a0a0f;
+  --color-ink-2: #0f0f16;
+  --color-panel: #14141c;
+  --color-panel-2: #1a1a24;
+  --color-panel-3: #20202c;
+  --color-line: #2a2a38;
+  --color-line-2: #33333f;
+  --color-fg: #ececf4;
+  --color-accent: #00f5ff;
+  --color-accent-2: #5cf6ff;
+  --color-accent-soft: rgba(0, 245, 255, 0.12);
+  --color-bad: #ff5470;
+
+  /* ---- Type ---- */
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+
+  /* ---- Radius ---- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+}
+
+:root {
+  color-scheme: dark;
+  --cm-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --cm-shadow-2: 0 6px 20px rgba(0, 0, 0, 0.5);
+  --cm-shadow-3: 0 16px 56px rgba(0, 0, 0, 0.6);
+  --cm-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --glow-cyan: 0 0 10px rgba(0, 245, 255, 0.4);
+  --glow-violet: 0 0 10px rgba(192, 0, 255, 0.4);
+  --glow-magenta: 0 0 10px rgba(255, 0, 85, 0.4);
+  --grad: linear-gradient(135deg, #00f5ff 0%, #c000ff 100%);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  /* Ambient brand backdrop: cyan glow top-center, violet lower-left. */
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(0, 245, 255, 0.08), transparent 60%),
+    radial-gradient(120% 90% at 0% 110%, rgba(192, 0, 255, 0.1), transparent 60%),
+    var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+.selectable,
+.selectable * {
+  user-select: text;
+}
+
+/* Neon gradient text (brand, headline accents) */
+.grad-text {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #23232f;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #33333f;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::selection {
+  background: rgba(0, 245, 255, 0.28);
+  color: #ececf4;
+}
+
+/* Numeric/data cells */
+.tnum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes cmCaret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes cmFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cmPop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cmScrim {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cmToast {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cmShimmer {
+  0% {
+    background-position: -560px 0;
+  }
+  100% {
+    background-position: 560px 0;
+  }
+}
+
+@keyframes cmPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+.cm-pulse {
+  animation: cmPulse 1.5s ease-in-out infinite;
+}
+
+.animate-fade {
+  animation: cmFade 0.28s var(--cm-ease) both;
+}
+.cm-skel {
+  background: linear-gradient(90deg, var(--color-bg) 25%, var(--color-surface-3) 50%, var(--color-bg) 75%);
+  background-size: 200% 100%;
+  animation: cmShimmer 1.3s linear infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* Caret in the brand mark */
+.cm-caret {
+  animation: cmCaret 1.2s step-end infinite;
+}

@@ -1,0 +1,58 @@
+{
+    "name": "cipher-manager",
+    "private": true,
+    "version": "0.2.0-beta.1",
+    "type": "module",
+    "description": "Windows workspace for local agent history, notes and interactive sessions.",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc --noEmit && vite build",
+        "build:snapshot": "vite build --mode snapshot",
+        "prepare:bundle": "node scripts/prepare-bundle.mjs",
+        "release": "tauri build --bundles nsis",
+        "make:snapshot": "node scripts/make-snapshot.mjs",
+        "web": "node scripts/web.mjs",
+        "serve": "cargo run --release --manifest-path src-tauri/Cargo.toml --bin serve --",
+        "preview": "vite preview",
+        "tauri": "tauri",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --lib",
+        "check:release": "node scripts/check-release.mjs",
+        "export:public": "node scripts/export-public.mjs",
+        "check": "npm run check:release && npm test && node --test scripts/export-public.test.mjs && npm run build && cargo test --manifest-path src-tauri/Cargo.toml --lib && cargo test --manifest-path src-tauri/Cargo.toml --bin serve && cargo check --manifest-path src-tauri/Cargo.toml --bins"
+    },
+    "dependencies": {
+        "@tauri-apps/api": "^2.1.1",
+        "@tauri-apps/plugin-notification": "^2.3.3",
+        "@xterm/addon-fit": "^0.11.0",
+        "@xterm/xterm": "^6.0.0",
+        "clsx": "^2.1.1",
+        "date-fns": "^4.1.0",
+        "lucide-react": "^0.469.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-router-dom": "^7.18.3",
+        "recharts": "^2.15.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.0.0",
+        "@tauri-apps/cli": "^2.1.0",
+        "@testing-library/dom": "^10.4.1",
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.2",
+        "@types/react": "^18.3.12",
+        "@types/react-dom": "^18.3.1",
+        "@vitejs/plugin-react": "^4.3.4",
+        "happy-dom": "^20.10.6",
+        "tailwindcss": "^4.0.0",
+        "typescript": "^5.6.3",
+        "vite": "^6.0.3",
+        "vite-plugin-singlefile": "^2.3.3",
+        "vitest": "^4.1.10"
+    },
+    "license": "MIT",
+    "engines": {
+        "node": ">=22"
+    }
+}

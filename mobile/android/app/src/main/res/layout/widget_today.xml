@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#05060a"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!--
+        android:text on stamp/body/actionSkill is placeholder only: this layout
+        is also the previewLayout, and without it the widget picker shows an
+        empty box. Every render overwrites all three.
+    -->
+    <TextView
+        android:id="@+id/stamp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="now"
+        android:textColor="#8b93a7"
+        android:textSize="13sp" />
+
+    <!--
+        maxLines is the ONLY place this text ellipsizes: a TextView does not
+        reduce maxLines to fit its measured height, so a value larger than the
+        cell can show puts the "…" below the visible bounds and the page clips
+        mid-word instead. 3 fits a typical 4x2 placement (~150dp, leaving ~4
+        lines of body under the stamp and the action row). Erring low only
+        wastes space on a widget the user resized taller; erring high brings
+        the silent mid-word clip back.
+    -->
+    <TextView
+        android:id="@+id/body"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="6dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:text="Today's brief"
+        android:textColor="#e6e8f0"
+        android:textSize="15sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/actionDeck"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Deck"
+            android:textColor="#7dd3fc"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/actionAsk"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Ask"
+            android:textColor="#7dd3fc"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/actionSkill"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Run"
+            android:textColor="#7dd3fc"
+            android:textSize="13sp" />
+    </LinearLayout>
+</LinearLayout>

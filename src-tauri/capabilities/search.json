@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "search-window",
+  "description": "The universal-search panel. Tauri's ACL is per-window, so this window needs its own capability or it launches with nothing: no event listener for its show signal, no way to hide itself on Esc, no draggable title bar. core:window:default covers read-only queries only, hence the two explicit grants. Showing and focusing happen in Rust, so allow-show / allow-set-focus are deliberately not here.",
+  "windows": ["search"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-hide",
+    "core:window:allow-start-dragging"
+  ]
+}

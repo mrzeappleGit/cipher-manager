@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const read = p => readFileSync(p, 'utf8');
+const pkg = JSON.parse(read('package.json'));
+const lock = JSON.parse(read('package-lock.json'));
+const tauri = JSON.parse(read('src-tauri/tauri.conf.json'));
+const cargo = read('src-tauri/Cargo.toml').match(/^version = "([^"]+)"/m)?.[1];
+assert.match(pkg.version, /^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/);
+for (const version of [lock.version, lock.packages[''].version, tauri.version, cargo]) assert.equal(version, pkg.version, 'release versions must agree');
+assert.equal(pkg.license, 'MIT');
+assert.match(read('LICENSE'), /^MIT License/);
+assert.deepEqual(tauri.bundle.externalBin, ['binaries/serve']);
+assert.equal(tauri.build.beforeBuildCommand, 'npm run prepare:bundle');
+assert.equal(pkg.scripts['prepare:bundle'], 'node scripts/prepare-bundle.mjs');
+assert.ok(!read('public/schedule-maker.html').includes('data:image/png;base64,'), 'personal bundled raster art must not return');
+console.log(`Release metadata verified: ${pkg.version}`);

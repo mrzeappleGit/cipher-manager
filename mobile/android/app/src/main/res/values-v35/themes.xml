@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 15 enforces edge-to-edge for targetSdk 35; the WebView's own
+         insets handling is unreliable, so opt the window out entirely — the
+         system lays the app out below the status/navigation bars again. -->
+    <style name="Theme.Cipher" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#05060a</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+        <item name="android:statusBarColor">#05060a</item>
+        <item name="android:navigationBarColor">#05060a</item>
+    </style>
+</resources>

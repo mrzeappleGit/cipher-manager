@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "scribe-windows",
+  "description": "The CipherScribe nib and suggestions panel. Both are non-activating overlays driven entirely from Rust (show/hide/move are commands, not JS window calls), so core:default covers them - see capabilities/search.json for why an omitted window fails silently. allow-listen/allow-emit are named explicitly because both are load-bearing and both fail silently: the windows RENDER from the nib_state/panel_data events they listen for, and the panel's 'Turn off for <exe>' hands the write to the main window by emitting scribe-disable-app (settings are a per-webview cache, so the panel must not write them itself).",
+  "windows": ["nib", "panel"],
+  "permissions": ["core:default", "core:event:allow-listen", "core:event:allow-emit"]
+}

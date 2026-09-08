@@ -1,0 +1,112 @@
+[package]
+name = "cipher-manager"
+version = "0.2.0-beta.1"
+description = "Manage all your Claude Code projects"
+authors = ["cipherManager contributors"]
+license = "MIT"
+edition = "2021"
+# Two binaries exist (app + serve); `cargo run` should mean the app.
+default-run = "cipher-manager"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "cipher_manager_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+serde_json = "1"
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png", "protocol-asset"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+dirs = "5"
+tempfile = "3.27.0"
+# Blocking HTTP client used to proxy AI provider calls (avoids browser CORS)
+# and to fetch calendar (ICS) feeds + Asana tasks for the Deck.
+ureq = { version = "2", features = ["json"] }
+# Dates / times / timezones â€” powers the Deck (calendar + tasks).
+chrono = { version = "0.4", features = ["clock", "serde"] }
+chrono-tz = "0.10"
+# Meeting recorder: mic + system (WASAPI loopback) capture and WAV files.
+cpal = "0.15"
+hound = "3.5"
+# Native file-picker dialog (import an audio file to transcribe).
+rfd = "0.15"
+
+# Used by the `serve` binary (local web server) only.
+tiny_http = "0.12"
+include_dir = "0.7"
+tauri-plugin-notification = "2.3.3"
+libloading = "0.9.0"
+tauri-plugin-global-shortcut = "2.3.2"
+qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
+keyring = { version = "3", default-features = false, features = ["windows-native"] }
+# CipherScribe fold-in: clipboard + synthetic paste for apply-in-place.
+arboard = "3"
+enigo = "0.3"
+sha2 = "0.11.0"
+portable-pty = "0.9.0"
+# Proton Mail, via Bridge's local IMAP server on 127.0.0.1 (Proton is E2E
+# encrypted, so Bridge decrypting locally is the only supported way in).
+# mailparse handles MIME + transfer-encoding + RFC2047 headers so bodies arrive
+# as text.
+#
+# rustls, NOT native-tls: native-tls drags in schannel -> a second windows-sys
+# major, and generating its import libraries trips this machine's AV mid-link
+# (`error creating import library for <random>.dll ... locked`), which breaks
+# the release build outright. ureq already uses rustls, so this adds no new
+# native code at all.
+#
+# 3.x is still tagged alpha upstream but is the line with ClientBuilder +
+# STARTTLS (Bridge's default connection mode); 2.x only does implicit TLS.
+#
+# OFF BY DEFAULT — see the `proton` feature below. Both TLS backends reach
+# schannel on Windows (native-tls directly, rustls via rustls-native-certs),
+# and imap enables rustls-connector's default features so that can't be turned
+# off from here. Adding schannel changes windows-sys's feature union, forcing a
+# rebuild of a crate that emits hundreds of import libraries — and on this
+# machine that rebuild loses a race every time:
+#   error creating import library for <varies>.dll ... locked (os error 33)
+# Seven attempts, a different DLL each run. Exclude the target dir from
+# real-time AV scanning, then build with `--features proton`.
+imap = { version = "3.0.0-alpha.15", default-features = false, features = ["rustls-tls"], optional = true }
+mailparse = { version = "0.16", optional = true }
+
+[features]
+# Proton Mail via Bridge's local IMAP server. Off by default so the standard
+# build stays green; everything else in the Packages feature works without it.
+proton = ["dep:imap", "dep:mailparse"]
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_System_Com",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Ole",
+  "Win32_System_SystemInformation",
+  "Win32_System_Threading",
+  "Win32_UI_Accessibility",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
+# The desktop app (default binary).
+[[bin]]
+name = "cipher-manager"
+path = "src/main.rs"
+
+# The local web server + snapshot exporter.
+[[bin]]
+name = "serve"
+path = "src/bin/serve.rs"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -1,0 +1,19 @@
+{
+  "package_id": "com.ciphermanager.g2",
+  "edition": "202601",
+  "name": "cipherManager",
+  "version": "0.1.1",
+  "min_app_version": "2.0.0",
+  "min_sdk_version": "0.0.12",
+  "entrypoint": "index.html",
+  "permissions": [
+    {
+      "name": "network",
+      "desc": "Talks to your own cipherManager server (agenda, tasks, usage). Nothing leaves your network.",
+      "whitelist": [
+        "http://127.0.0.1:4600"
+      ]
+    }
+  ],
+  "supported_languages": ["en"]
+}

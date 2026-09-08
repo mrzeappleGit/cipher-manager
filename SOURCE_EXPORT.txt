@@ -1,0 +1,1 @@
+Clean working-tree source export. No Git history, tags, credentials or local agent notes are intentionally included. Review and scan before publication.

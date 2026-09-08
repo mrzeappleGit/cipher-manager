@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">cipher</string>
+
+    <!-- Without these the picker lists both widgets as "cipher" (the app label). -->
+    <string name="widget_next_up_label">Next up</string>
+    <string name="widget_next_up_description">Countdown to your next meeting. Keeps ticking with no connection.</string>
+    <string name="widget_today_label">Today</string>
+    <string name="widget_today_description">Today\'s brief, with shortcuts into the app.</string>
+</resources>

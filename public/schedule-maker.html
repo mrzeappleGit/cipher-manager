@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cipher Schedule Maker</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; display:flex; min-height:100vh; background:#0b0f1a; color:#cdd8ee;
+         font-family:"Segoe UI",system-ui,sans-serif; }
+  #panel { width:400px; flex:none; padding:18px 20px; background:#101627; overflow-y:auto;
+           border-right:1px solid #1d2a45; }
+  #panel h1 { font-size:17px; letter-spacing:3px; color:#39d5ef; margin:0 0 14px; }
+  label { display:block; font-size:11px; letter-spacing:1px; color:#7f93b8; margin:10px 0 3px; text-transform:uppercase; }
+  input { width:100%; padding:6px 8px; background:#0b101e; color:#dfe8f8;
+          border:1px solid #24345e; border-radius:4px; font-size:14px; }
+  input:focus { outline:1px solid #39d5ef; }
+  .day { display:grid; grid-template-columns:46px 1fr 90px; gap:6px; align-items:center; margin:6px 0; }
+  .day b { font-size:12px; color:#94b0da; letter-spacing:2px; }
+  .hint { font-size:11px; color:#5c6f94; margin:8px 0 0; line-height:1.5; }
+  button { width:100%; margin-top:16px; padding:10px; font-size:15px; font-weight:600; letter-spacing:2px;
+           background:#39d5ef; color:#06121c; border:0; border-radius:5px; cursor:pointer; }
+  button:hover { background:#6fe3f6; }
+  #preview { flex:1; display:flex; align-items:center; justify-content:center; padding:20px; min-width:0; }
+  #preview svg { width:100%; height:auto; max-height:95vh; box-shadow:0 0 40px #000; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .arts { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .arts img { width:52px; height:52px; object-fit:contain; background:#0b101e;
+              border:2px solid #24345e; border-radius:6px; cursor:pointer; }
+  .arts img.sel { border-color:#39d5ef; }
+  .mini { width:auto; flex:1; margin-top:8px; padding:5px 8px; font-size:11px; letter-spacing:1px;
+          background:#24345e; color:#cdd8ee; }
+  .mini:hover { background:#33507e; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <h1>WEEKLY SCHEDULE</h1>
+  <div class="two">
+    <div><label>Week of (Monday)</label><input type="date" id="monday"></div>
+    <div><label>Timezone</label><input id="tz" maxlength="4"></div>
+  </div>
+  <label>Handle</label><input id="handle">
+  <label>Character art</label>
+  <div class="arts" id="arts"></div>
+  <input type="file" id="artfile" accept="image/*" multiple style="margin-top:6px">
+  <p class="hint">Drag the chibi on the preview to move it, scroll on it to resize.</p>
+  <div style="display:flex; gap:8px">
+    <button id="resetfit" class="mini">RESET FIT</button>
+    <button id="delart" class="mini" style="display:none">REMOVE ART</button>
+  </div>
+  <label style="margin-top:14px">Days — leave blank for offline. Use | for a 2nd line.</label>
+  <div id="days"></div>
+  <button id="dl">DOWNLOAD PNG</button>
+<button id="discord" style="margin-top:8px; background:#5865F2; color:#fff">COPY FOR DISCORD</button>
+<button id="site" style="margin-top:8px">PUSH TO WEBSITE</button>
+  <p class="hint">Saves automatically — reopen this file next week and just edit what changed.
+     Example: <i>24 hour Stream|with friends</i> &nbsp;·&nbsp; time like <i>6PM</i>.</p>
+</div>
+<div id="preview"></div>
+
+<script>
+const DAYS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+const ARTS = [{"d":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNjQwIj48cmVjdCB4PSIxMDAiIHk9IjEwMCIgd2lkdGg9IjQ0MCIgaGVpZ2h0PSI0NDAiIHJ4PSI4MCIgZmlsbD0iIzEyMWIyNiIvPjxwYXRoIGQ9Ik0yMjAgMjYwbDYwIDYwLTYwIDYwbTExMCAwaDkwIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMGNiZDQiIHN0cm9rZS13aWR0aD0iMjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==","w":640,"h":640}]; // Original project-owned placeholder; custom art stays on this device.
+
+const KEY = 'cipherSchedule';
+
+const state = Object.assign(
+  { monday: nextMonday(), tz: 'CT', handle: '',
+    art: 0, customs: [], fit: {},
+    rows: DAYS.map(() => ({ title: '', time: '' })) },
+  JSON.parse(localStorage.getItem(KEY) || '{}')
+);
+if (state.custom) { state.customs = [state.custom]; delete state.custom; }  // old format
+if (state.art === -1) state.art = ARTS.length;
+if (!state.fit) state.fit = {};
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (e) {  // custom art too big for localStorage — save the rest
+    const { customs, ...rest } = state;
+    try { localStorage.setItem(KEY, JSON.stringify(rest)); } catch (_) {}
+  }
+}
+
+function nextMonday() {
+  const d = new Date();
+  d.setDate(d.getDate() + ((8 - d.getDay()) % 7));
+  return d.toISOString().slice(0, 10);
+}
+function dateRange() {
+  const a = new Date(state.monday + 'T12:00:00');
+  if (isNaN(a)) return '';
+  const b = new Date(a); b.setDate(b.getDate() + 6);
+  const f = d => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }).toUpperCase();
+  return f(a) + '  -  ' + f(b);
+}
+const esc = s => s.replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+
+// --- build the 1920x1080 schedule as SVG ---
+function svg() {
+  const BAR = '#94b0da', CHIP = '#5f88c9', DARK = '#0c1730', ACC = '#39d5ef', DIM = '#33507e';
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" id="sched">
+  <rect width="1920" height="1080" fill="#060a13"/>`;
+
+  // background tech decorations (right side diagonals, corner brackets, scanlines)
+  s += `<g stroke="${DIM}" stroke-width="3" opacity="0.55" fill="none">
+    <path d="M1250 1080 L1920 410"/><path d="M1330 1080 L1920 490"/>
+    <path d="M1500 0 L1920 420"/><path d="M1560 0 L1920 360"/>
+  </g>
+  <g stroke="${ACC}" stroke-width="4" opacity="0.9" fill="none">
+    <path d="M1180 1080 L1920 340"/><path d="M1440 0 L1920 480"/>
+  </g>
+  <g fill="${DIM}" opacity="0.8" font-family="Consolas,monospace" font-size="20">
+    <text x="40" y="1052" letter-spacing="6">//CIPHER.SYS</text>
+    <text x="1210" y="46" letter-spacing="6">ID:0x2F</text>
+  </g>
+  <g stroke="${ACC}" stroke-width="5" fill="none" opacity="0.9">
+    <path d="M28 28 h52 M28 28 v52"/><path d="M1892 28 h-52 M1892 28 v52"/>
+    <path d="M28 1052 h52 M28 1052 v-52"/><path d="M1892 1052 h-52 M1892 1052 v-52"/>
+  </g>
+  <g fill="${ACC}" opacity="0.85">
+    <path d="M120 995 l14 -22 14 22 z"/><path d="M158 995 l14 -22 14 22 z"/>
+  </g>`;
+
+  // header
+  s += `<text x="565" y="78" text-anchor="middle" fill="#e8f0fc" font-family="Consolas,monospace"
+      font-size="46" font-weight="bold" letter-spacing="20">WEEKLY SCHEDULE</text>
+  <text x="565" y="120" text-anchor="middle" fill="${CHIP}" font-family="Consolas,monospace"
+      font-size="22" letter-spacing="8">FOR THE WEEK OF ${esc(dateRange())}</text>
+  <path d="M180 96 l-26 -26 v-26" stroke="${ACC}" stroke-width="4" fill="none"/>
+  <path d="M950 44 l26 26 v26" stroke="${ACC}" stroke-width="4" fill="none"/>
+  <line x1="120" y1="146" x2="1010" y2="146" stroke="${DIM}" stroke-width="2"/>`;
+
+  // character art: contain-fit into the right-side box, bottom-anchored, plus user fit tweaks
+  const p = place();
+  s += `<image id="artimg" href="${p.a.d}" x="${p.x}" y="${p.y}" width="${p.iw}" height="${p.ih}" style="cursor:move"/>`;
+
+  // day rows
+  const y0 = 178, pitch = 122, h = 96, cut = 16;
+  DAYS.forEach((day, i) => {
+    const y = y0 + i * pitch, r = state.rows[i];
+    const on = r.title.trim() !== '';
+    const bx = 200, bw = 900;
+    const poly = `${bx + cut},${y} ${bx + bw},${y} ${bx + bw},${y + h - cut} ${bx + bw - cut},${y + h} ${bx},${y + h} ${bx},${y + cut}`;
+    s += `<rect x="34" y="${y}" width="112" height="${h}" rx="10" fill="${CHIP}"/>
+    <text x="90" y="${y + h / 2 + 10}" text-anchor="middle" fill="${DARK}" font-family="Consolas,monospace"
+        font-size="30" font-weight="bold" letter-spacing="3">${day}</text>
+    <g stroke="${on ? ACC : DIM}" stroke-width="4">
+      <path d="M162 ${y + h / 2 - 9} l18 18 M180 ${y + h / 2 - 9} l-18 18"/>
+    </g>
+    <polygon points="${poly}" fill="${BAR}" opacity="${on ? 1 : 0.55}"/>`;
+    if (on) {
+      const lines = r.title.split('|').map(t => t.trim()).filter(Boolean);
+      const fs = Math.max(...lines.map(l => l.length)) > 26 ? 30 : 38;
+      const cx = bx + (r.time ? 380 : 450);
+      if (lines.length > 1) {
+        s += `<text x="${cx}" y="${y + h / 2 - 6}" text-anchor="middle" fill="${DARK}"
+          font-family="Consolas,monospace" font-size="${fs}" font-weight="bold" letter-spacing="4">${esc(lines[0])}</text>
+        <text x="${cx}" y="${y + h / 2 + 32}" text-anchor="middle" fill="${DARK}"
+          font-family="Consolas,monospace" font-size="${fs}" font-weight="bold" letter-spacing="4">${esc(lines[1])}</text>`;
+      } else {
+        s += `<text x="${cx}" y="${y + h / 2 + 13}" text-anchor="middle" fill="${DARK}"
+          font-family="Consolas,monospace" font-size="${fs}" font-weight="bold" letter-spacing="4">${esc(lines[0] || '')}</text>`;
+      }
+      if (r.time) {
+        s += `<text x="${bx + bw - 130}" y="${y + h / 2 + 11}" text-anchor="end" fill="${DARK}"
+          font-family="Consolas,monospace" font-size="30" font-weight="bold" letter-spacing="2">${esc(r.time)}</text>
+        <rect x="${bx + bw - 118}" y="${y + h / 2 - 20}" width="66" height="40" rx="5" fill="${DARK}"/>
+        <text x="${bx + bw - 85}" y="${y + h / 2 + 10}" text-anchor="middle" fill="#e8f0fc"
+          font-family="Consolas,monospace" font-size="26" font-weight="bold">${esc(state.tz)}</text>`;
+      }
+    } else {
+      s += `<text x="${bx + 60}" y="${y + h / 2 + 9}" fill="#3d5a86" font-family="Consolas,monospace"
+        font-size="24" font-weight="bold" letter-spacing="5">&#10005;&#160;&#160;DATA UNAVAILABLE</text>
+      <text x="${bx + bw - 90}" y="${y + h / 2 + 16}" text-anchor="end" fill="none" stroke="#1d3d63"
+        stroke-width="2" font-family="Consolas,monospace" font-size="52" font-weight="bold"
+        letter-spacing="14" transform="rotate(-3 ${bx + bw - 90} ${y + h / 2})" opacity="0.9">OFFLINE</text>`;
+    }
+  });
+
+  // handle
+  s += `<text x="1888" y="1056" text-anchor="end" fill="#94b0da" font-family="Consolas,monospace"
+      font-size="24" letter-spacing="3">${esc(state.handle)}</text>
+  </svg>`;
+  return s;
+}
+
+// --- UI wiring ---
+const $ = id => document.getElementById(id);
+$('monday').value = state.monday;
+$('tz').value = state.tz;
+$('handle').value = state.handle;
+const daysDiv = $('days');
+DAYS.forEach((d, i) => {
+  const row = document.createElement('div');
+  row.className = 'day';
+  row.innerHTML = `<b>${d}</b><input placeholder="offline" data-i="${i}" data-f="title">
+                   <input placeholder="time" data-i="${i}" data-f="time">`;
+  daysDiv.appendChild(row);
+  row.children[1].value = state.rows[i].title;
+  row.children[2].value = state.rows[i].time;
+});
+
+function allArts() { return ARTS.concat(state.customs); }
+
+function curFit(create) {
+  const i = state.art;
+  const store = i < ARTS.length ? state.fit : state.customs[i - ARTS.length];
+  const k = i < ARTS.length ? i : 'fit';
+  if (!store[k] && create) store[k] = { dx: 0, dy: 0, s: 1 };
+  return store[k];
+}
+
+function place() {
+  const list = allArts();
+  if (state.art < 0 || state.art >= list.length) state.art = 0;
+  const a = list[state.art];
+  const t = curFit(false) || { dx: 0, dy: 0, s: 1 };
+  const BX = 1080, BY = 110, BW = 840, BH = 970;
+  const sc = Math.min(BW / a.w, BH / a.h) * t.s;
+  const iw = a.w * sc, ih = a.h * sc;
+  // scale about bottom-center so the feet stay put while resizing
+  return { a, iw, ih, x: BX + (BW - iw) / 2 + t.dx, y: BY + BH - ih + t.dy };
+}
+
+function applyFit() {
+  const el = document.getElementById('artimg');
+  if (!el) return;
+  const p = place();
+  el.setAttribute('x', p.x); el.setAttribute('y', p.y);
+  el.setAttribute('width', p.iw); el.setAttribute('height', p.ih);
+}
+
+function drawArts() {
+  const box = $('arts');
+  box.innerHTML = '';
+  allArts().forEach((a, i) => {
+    const im = new Image();
+    im.src = a.d;
+    im.className = state.art === i ? 'sel' : '';
+    im.onclick = () => { state.art = i; save(); drawArts(); $('preview').innerHTML = svg(); };
+    box.appendChild(im);
+  });
+  $('delart').style.display = state.art >= ARTS.length ? '' : 'none';
+}
+
+$('artfile').onchange = e => {
+  [...e.target.files].forEach(f => {
+    const r = new FileReader();
+    r.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        state.customs.push({ d: r.result, w: im.naturalWidth, h: im.naturalHeight });
+        state.art = ARTS.length + state.customs.length - 1;
+        save(); drawArts();
+        $('preview').innerHTML = svg();
+      };
+      im.src = r.result;
+    };
+    r.readAsDataURL(f);
+  });
+  e.target.value = '';
+};
+
+$('resetfit').onclick = () => {
+  if (state.art < ARTS.length) delete state.fit[state.art];
+  else delete state.customs[state.art - ARTS.length].fit;
+  save(); $('preview').innerHTML = svg();
+};
+
+$('delart').onclick = () => {
+  if (state.art < ARTS.length) return;
+  state.customs.splice(state.art - ARTS.length, 1);
+  state.art = 0;
+  save(); drawArts();
+  $('preview').innerHTML = svg();
+};
+
+// drag to move, wheel to scale — mutate the live <image> during the gesture,
+// rebuild + save only when it ends (rebuilding mid-drag would kill pointer capture)
+const pv = $('preview');
+let drag = null;
+pv.addEventListener('pointerdown', e => {
+  if (e.target.id !== 'artimg') return;
+  const t = curFit(true);
+  drag = { x: e.clientX, y: e.clientY, dx: t.dx, dy: t.dy,
+           k: 1920 / pv.querySelector('svg').getBoundingClientRect().width };
+  pv.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+pv.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const t = curFit(true);
+  t.dx = drag.dx + (e.clientX - drag.x) * drag.k;
+  t.dy = drag.dy + (e.clientY - drag.y) * drag.k;
+  applyFit();
+});
+pv.addEventListener('pointerup', () => { if (drag) { drag = null; save(); } });
+pv.addEventListener('wheel', e => {
+  if (e.target.id !== 'artimg') return;
+  e.preventDefault();
+  const t = curFit(true);
+  t.s = Math.min(3, Math.max(0.2, t.s * (e.deltaY < 0 ? 1.06 : 1 / 1.06)));
+  applyFit(); save();
+}, { passive: false });
+
+function update() {
+  state.monday = $('monday').value;
+  state.tz = $('tz').value;
+  state.handle = $('handle').value;
+  document.querySelectorAll('[data-i]').forEach(el => state.rows[+el.dataset.i][el.dataset.f] = el.value);
+  save();
+  $('preview').innerHTML = svg();
+}
+document.body.addEventListener('input', e => { if (e.target.id !== 'artfile') update(); });
+drawArts();
+update();
+
+$('dl').onclick = () => {
+  const blob = new Blob([svg()], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = 1920; c.height = 1080;
+    c.getContext('2d').drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    const a = document.createElement('a');
+    a.download = 'schedule-' + state.monday + '.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+  };
+  img.src = url;
+};
+
+// --- Discord announcement export ---
+// ponytail: times are interpreted in this PC's timezone; the TZ field is just a label on the PNG
+function unixFor(i) {
+  const m = state.rows[i].time.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?$/i);
+  if (!m) return null;
+  let h = +m[1];
+  const min = +(m[2] || 0);
+  const ap = (m[3] || '').charAt(0).toLowerCase();
+  if (ap === 'p' && h < 12) h += 12;
+  if (ap === 'a' && h === 12) h = 0;
+  const d = new Date(state.monday + 'T12:00:00');
+  if (isNaN(d)) return null;
+  d.setDate(d.getDate() + i);
+  d.setHours(h, min, 0, 0);
+  return Math.floor(d.getTime() / 1000);
+}
+
+$('discord').onclick = () => {
+  const lines = ['\u{1F4C5} **Weekly Schedule — ' + state.handle + '**', ''];
+  DAYS.forEach((day, i) => {
+    const r = state.rows[i];
+    if (!r.title.trim()) { lines.push('**' + day + '** — *offline*'); return; }
+    const title = r.title.split('|').map(s => s.trim()).filter(Boolean).join(' — ');
+    const u = unixFor(i);
+    const when = u ? '<t:' + u + ':f> (<t:' + u + ':R>)' : r.time.trim();
+    lines.push('**' + day + '** — ' + title + (when ? ' — ' + when : ''));
+  });
+  const text = lines.join('\n');
+  const done = ok => {
+    const b = $('discord');
+    b.textContent = ok ? 'COPIED!' : 'COPY FAILED';
+    setTimeout(() => { b.textContent = 'COPY FOR DISCORD'; }, 1500);
+  };
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    done(ok);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => done(true), fallback);
+  } else fallback();
+};
+
+// --- Push to configured website ---------------------------------------------------
+// The site renders /schedule.json verbatim: [{ day, time, show }], top-to-
+// bottom. Offline days are omitted; times entered above (this PC's timezone,
+// via unixFor) are converted to "HH:MM UTC", falling back to the raw text
+// when unparseable. The app shell (Schedule.tsx) does the actual ssh push —
+// this frame just posts the JSON up.
+function siteRows() {
+  const out = [];
+  DAYS.forEach((day, i) => {
+    const r = state.rows[i];
+    if (!r.title.trim()) return;
+    let time = r.time.trim();
+    const u = unixFor(i);
+    if (u) {
+      const d = new Date(u * 1000);
+      time = String(d.getUTCHours()).padStart(2, '0') + ':' +
+             String(d.getUTCMinutes()).padStart(2, '0') + ' UTC';
+    }
+    out.push({ day, time, show: r.title.trim() });
+  });
+  return out;
+}
+let siteArmed = false;
+$('site').onclick = () => {
+  const rows = siteRows();
+  const b = $('site');
+  if (!rows.length && !siteArmed) {
+    // Empty schedule is valid (site falls back to built-ins) but deliberate.
+    siteArmed = true;
+    b.textContent = 'PUSH EMPTY SCHEDULE? CLICK AGAIN';
+    setTimeout(() => { siteArmed = false; b.textContent = 'PUSH TO WEBSITE'; }, 4000);
+    return;
+  }
+  siteArmed = false;
+  b.textContent = 'PUSHING…';
+  setTimeout(() => { b.textContent = 'PUSH TO WEBSITE'; }, 2000);
+  window.parent.postMessage(
+    { type: 'cipher-push-schedule', json: JSON.stringify(rows, null, 2) },
+    window.location.origin
+  );
+};
+</script>
+
+</body>
+</html>

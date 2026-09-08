@@ -1,0 +1,38 @@
+{
+  "Actions": [
+    {
+      "Icon": "imgs/action",
+      "Name": "Cipher push-to-talk",
+      "States": [
+        {
+          "Image": "imgs/idle",
+          "TitleAlignment": "bottom"
+        },
+        {
+          "Image": "imgs/live",
+          "TitleAlignment": "bottom"
+        }
+      ],
+      "SupportedInMultiActions": true,
+      "Tooltip": "Trigger the cipherManager voice assistant — tap, then speak.",
+      "UUID": "com.ciphermanager.voice.trigger"
+    }
+  ],
+  "SDKVersion": 2,
+  "Author": "cipherManager contributors",
+  "CodePath": "plugin.html",
+  "Description": "Push-to-talk key for the cipherManager voice assistant. The icon tracks the ear: gray when off, cyan when listening, magenta while it captures your command.",
+  "Name": "cipherManager Voice",
+  "Icon": "imgs/plugin",
+  "URL": "https://github.com/mrzeappleGit/cipher-manager",
+  "Version": "1.0.0",
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Software": {
+    "MinimumVersion": "6.0"
+  }
+}
